@@ -45,4 +45,10 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    // Relasi ke Token (One to Many)
+    public function tokens()
+    {
+        return $this->hasMany(Tokens::class, 'user_id', 'id');
+    }
 }

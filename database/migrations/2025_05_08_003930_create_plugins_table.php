@@ -17,8 +17,9 @@ return new class extends Migration
             $table->string('plugin_file');
             $table->string('logo');
             $table->text('description');
-            $table->string('version')->nullable();
-            $table->string('status')->default('Aktif');
+            $table->string('versi')->nullable();
+            $table->string('harga')->nullable();
+            $table->string('status')->default('1');
             $table->timestamps();
         });
     }

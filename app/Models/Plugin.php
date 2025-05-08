@@ -14,5 +14,8 @@ class Plugin extends Model
         'plugin_file',
         'logo',
         'description',
+        'harga',
+        'versi',
+        'status',
     ];
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Plugin;
+use App\Models\Tokens;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -18,7 +19,8 @@ class pluginController extends Controller
     }
     public function dashboard(){
         $plugins = Plugin::all(); // Mengambil semua data plugin
-        return view('dashboard.index', compact('plugins'));
+        $token = Tokens::where('user_id',auth()->user()->id)->first();
+        return view('dashboard.index', compact('plugins','token'));
     }
 
     public function register(Request $request)
@@ -76,30 +78,27 @@ class pluginController extends Controller
      // Method untuk menyimpan plugin
      public function add(Request $request)
      {
-         $request->validate([
-             'plugin_name' => 'required|string|max:255',
-             'plugin_file' => 'required|file|mimes:zip,tar,rar|max:10240',
-             'logo' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-             'description' => 'required|string',
-         ]);
-
+  
          // Simpan logo dan plugin file
          $pluginFilePath = $request->file('plugin_file')->store('plugins');
          $logoPath = $request->file('logo')->store('logos');
 
-         // Simpan data plugin ke database
          Plugin::create([
-             'plugin_name' => $request->plugin_name,
-             'plugin_file' => $pluginFilePath,
-             'logo' => $logoPath,
-             'description' => $request->description,
-         ]);
-
+            'plugin_name' => $request->plugin_name,
+            'plugin_file' => $pluginFilePath,
+            'logo' => $logoPath,
+            'description' => $request->description,
+            'harga' => $request->harga,        // Ubah jika di DB pakai harga
+            'versi' => $request->versi,        // Ubah jika di DB pakai versi
+            'status' => $request->status,
+        ]);
+        
          return redirect()->route('plugin.dashboard')->with('success', 'Plugin berhasil ditambahkan!');
      }
 
      public function download($id)
-    {$plugin = Plugin::findOrFail($id);
+    {
+        $plugin = Plugin::findOrFail($id);
 
         // Cek apakah path filenya ada
         if (!$plugin->plugin_file) {
@@ -119,4 +118,80 @@ class pluginController extends Controller
             return redirect()->back()->with('error', 'File tidak ditemukan di storage.');
         }
     }
+    public function update(Request $request)
+    {   
+        $id = $request->id;
+        // Temukan plugin berdasarkan ID
+        $plugin = Plugin::findOrFail($id);
+
+        // Validasi input
+        $request->validate([
+            'plugin_name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'harga' => 'required|numeric',
+            'versi' => 'required|string|max:10',
+            'status' => 'required|in:1,2',
+            'plugin_file' => 'nullable|file|mimes:zip,rar',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ]);
+
+        // **1️⃣ Update file plugin jika di-upload baru**
+        if ($request->hasFile('plugin_file')) {
+            // Hapus file lama jika ada
+            if ($plugin->plugin_file && \Storage::exists($plugin->plugin_file)) {
+                \Storage::delete($plugin->plugin_file);
+            }
+            // Simpan file baru
+            $pluginFilePath = $request->file('plugin_file')->store('plugins');
+            $plugin->plugin_file = $pluginFilePath;
+        }
+
+        // **2️⃣ Update logo jika di-upload baru**
+        if ($request->hasFile('logo')) {
+            // Hapus logo lama jika ada
+            if ($plugin->logo && \Storage::exists($plugin->logo)) {
+                \Storage::delete($plugin->logo);
+            }
+            // Simpan logo baru
+            $logoPath = $request->file('logo')->store('logos');
+            $plugin->logo = $logoPath;
+        }
+
+        // **3️⃣ Update field lainnya**
+        $plugin->plugin_name = $request->plugin_name;
+        $plugin->description = $request->description;
+        $plugin->harga = $request->harga;
+        $plugin->versi = $request->versi;
+        $plugin->status = $request->status;
+
+        // **4️⃣ Simpan perubahan ke database**
+        $plugin->save();
+
+        return redirect()->route('plugin.dashboard')->with('success', 'Plugin berhasil diperbarui!');
+    }
+    
+    public function destroy(Request $request)
+    {
+        $id = $request->id;
+
+        // Temukan plugin berdasarkan ID
+        $plugin = Plugin::findOrFail($id);
+
+        // **1️⃣ Hapus file plugin dari storage jika ada**
+        if ($plugin->plugin_file && \Storage::exists($plugin->plugin_file)) {
+            \Storage::delete($plugin->plugin_file);
+        }
+
+        // **2️⃣ Hapus logo dari storage jika ada**
+        if ($plugin->logo && \Storage::exists($plugin->logo)) {
+            \Storage::delete($plugin->logo);
+        }
+
+        // **3️⃣ Hapus data plugin dari database**
+        $plugin->delete();
+
+        // **4️⃣ Redirect dengan pesan sukses**
+        return redirect()->route('plugin.dashboard')->with('success', 'Plugin berhasil dihapus!');
+    }
+
 }

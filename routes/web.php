@@ -10,6 +10,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [pluginController::class, 'dashboard'])->name('plugin.dashboard');
     Route::post('/logout', [pluginController::class, 'logout'])->name('logout');
     Route::post('/add', [pluginController::class, 'add'])->name('plugin.store');
+    Route::post('/update', [pluginController::class, 'update'])->name('plugin.update');
     Route::get('plugins/download/{id}', [pluginController::class, 'download'])->name('plugin.download');
+    Route::post('/plugin/delete', [pluginController::class, 'destroy'])->name('plugin.delete');
 
 });
