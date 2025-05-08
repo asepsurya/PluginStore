@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use session;
 use App\Models\User;
 use App\Models\Plugin;
 use App\Models\Tokens;
@@ -23,12 +24,22 @@ class pluginController extends Controller
         return view('dashboard.index', compact('plugins','token'));
     }
 
+     // Fungsi untuk mendapatkan nama kota acak
+     public function getCaptcha()
+     {
+         $cities = ['Padang Sidempuan', 'Medan', 'Jakarta', 'Bandung', 'Surabaya'];
+         $randomCity = $cities[array_rand($cities)];  // Mengambil kota secara acak
+         session(['captcha_city' => $randomCity]);
+         return response()->json(['city' => $randomCity]);
+     }
+
     public function register(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
+            
         ]);
 
         $user = User::create([
@@ -49,7 +60,8 @@ class pluginController extends Controller
     {
         $request->validate([
             'email' => 'required|email',
-            'password' => 'required'
+            'password' => 'required',
+            'captcha' => 'required|in:' . session('captcha_city'), // Pastikan captcha valid
         ]);
 
         if (!Auth::attempt($request->only('email', 'password'))) {
@@ -169,7 +181,7 @@ class pluginController extends Controller
 
         return redirect()->route('plugin.dashboard')->with('success', 'Plugin berhasil diperbarui!');
     }
-    
+
     public function destroy(Request $request)
     {
         $id = $request->id;

@@ -5,7 +5,7 @@ use App\Http\Controllers\pluginController;
 
 Route::get('/', [pluginController::class, 'index'])->name('login')->middleware('guest');
 Route::post('/loginaksi', [pluginController::class, 'login'])->name('plugin.login');
-
+Route::get('/captcha', [pluginController::class, 'getCaptcha']);
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [pluginController::class, 'dashboard'])->name('plugin.dashboard');
     Route::post('/logout', [pluginController::class, 'logout'])->name('logout');

@@ -127,11 +127,9 @@
             <div class="col">
                 <div class="card shadow-sm h-100">
                     <div class="card-body d-flex align-items-center">
-                        <div class="bg-warning bg-opacity-10 text-warning rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
-                            <i class="fas fa-exclamation-triangle fa-lg"></i>
-                        </div>
+                       
                         <div class="flex-grow-1">
-                            <p class="mb-1 text-muted small">API</p>
+                            <p class="mb-1 text-muted small">Token API</p>
                             <h3 class="mb-0 fw-bold text-dark d-flex align-items-center gap-2">
                                 <span id="tokenText">{{ $token->token }}</span>
                                 <button onclick="copyToClipboard()" class="btn btn-sm btn-outline-primary" title="Salin Token">
@@ -144,6 +142,14 @@
             </div>
         </div>
         <div class="col">
+
+            <!-- Alert Info -->
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-info-circle me-2"></i> <!-- Icon Info dari Font Awesome -->
+                <strong>Info Penggunaan API : </strong> /api/plugin/list?token=xxxxxxxxxx.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+  
             <div class="mb-3">
                 <input type="text" id="searchInput" class="form-control" placeholder="Cari Plugin...">
             </div>
@@ -177,7 +183,8 @@
                             <td>
                                 <span class="badge bg-success text-white">{{ $plugin->status === '1' ? 'Aktif' : 'Tidak Aktif'}}</span>
                             </td>
-                            <td>{{ $plugin->updated_at->format('Y-m-d') }}</td>
+                            <td>{{ $plugin->updated_at->locale('id_ID')->isoFormat('D MMMM YYYY') }}</td>
+
                             <td class="text-center">
                                 <div class="btn-group">
                                     <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
