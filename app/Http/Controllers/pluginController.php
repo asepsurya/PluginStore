@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use session;
+use Midtrans\Snap;
 use App\Models\User;
+use Midtrans\Config;
 use App\Models\Plugin;
 use App\Models\Tokens;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -204,6 +207,57 @@ class pluginController extends Controller
 
         // **4️⃣ Redirect dengan pesan sukses**
         return redirect()->route('plugin.dashboard')->with('success', 'Plugin berhasil dihapus!');
+    }
+
+    public function payment($id){
+        return view('payment.index');
+    }
+
+    public function paymentprocess(Request $request)
+    {
+        \Midtrans\Config::$serverKey = config('midtrans.serverKey');
+        \Midtrans\Config::$isProduction = false;
+        \Midtrans\Config::$isSanitized = true;
+        \Midtrans\Config::$is3ds = true;
+        
+        $orderId = 'ORDER-' . rand();
+
+        // Simpan ke DB
+        Transaction::create([
+            'order_id' => $orderId,
+            'name' => $request->name,
+            'plugin' => $request->plugin,
+            'price' => $request->price,
+            'status' => 'pending',
+        ]);
+
+        $params = [
+            'transaction_details' => [
+                'order_id' => $orderId,
+                'gross_amount' => (int) $request->price,
+            ],
+            'item_details' => [
+                [
+                    'id' => 'plugin-001',
+                    'price' => (int) $request->price,
+                    'quantity' => 1,
+                    'name' => $request->plugin,
+                ],
+            ],
+            'customer_details' => [
+                'first_name' => $request->name,
+                'email' => 'dummy@example.com',
+            ],
+        ];
+
+        $snapToken = \Midtrans\Snap::getSnapToken($params);
+
+        Transaction::where('order_id', $orderId)->update([
+            'snap_token' => $snapToken,
+        ]);
+
+        return view('payment.payment_snap', compact('snapToken','orderId'));
+
     }
 
 }
